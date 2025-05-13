@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<div class="background-container">
+    <div>
+        {% if user.is_doctor %}
+            <h1 class="profile-head mb-4">Hello Dr. {{ user.name }}</h1>
+        {% else %}
+            <h1 class="profile-head mb-4">Hello {{ user.name }}</h1>
+        {% endif %}
+        <p class="profile-note">Welcome to your profile! Here, you can view your details, update your information, and manage your account effortlessly.</p>
+    </div>
+</div>
+
+<!-- Main Profile Section -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div>
+            <div class="card shadow-lg border-0 rounded-3 cardcustom ps-3">
+                <!-- Header -->
+                <!--<div class="card-header text-center bg-secondary text-white py-4 rounded-top">
+                    <h3 class="mb-0">{{ user.name }}</h3>
+                </div>-->
+
+                <!-- Card Body -->
+                <div class="card-body p-4">
+                    <form id="editProfileForm" method="POST" action="{% url 'edit_profile' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Layout -->
+                        <div class="row mt-20 ms-3">
+                            <!-- Left Side: Personal Info -->
+                            <div class="col-md-7 bg-white rounded-3 p-5 shadow">
+                                <div class="alert alert-light rounded-3 width-90 ms-4">
+                                    <h5 class="mb-3"><i class="fas fa-user me-3"></i>Personal Information</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Username:</label>
+                                        <input type="text" name="username" class="form-control" value="{{ user.username }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Name:</label>
+                                        <input type="text" name="name" class="form-control" value="{{ user.name }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email:</label>
+                                        <input type="email" name="email" class="form-control" value="{{ user.email }}" readonly>
+                                    </div>
+                                    {% if user.is_doctor %}
+                                        <div class="mb-3">
+                                            <label class="form-label">Phone Number:</label>
+                                            <input type="text" name="phone_number" class="form-control" value="{{ user.phone_number }}" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Languages known: <i class="fas fa-question-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Enter all langauges you speak separated by commas (e.g., English, Malayalam)"></i></label>
+                                            <input type="text" name="languages" class="form-control" value="{{ user.languages }}" readonly>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if user.is_patient %}
+                                <!-- Patient Details -->
+                                <div class="alert alert-light rounded-3 p-3 width-90 ms-4">
+                                    <h5 class="mb-3"><i class="fas fa-info-circle me-3"></i>Other Details</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Age:</label>
+                                        <input type="text" name="age" class="form-control" value="{{ user.age }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Gender:</label>
+                                        <select id="gender" class="form-select" name="gender" disabled>
+                                            <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
+                                            <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Height (cm):</label>
+                                            <input id="height" type="text" name="height" class="form-control" value="{{ user.height }}" readonly>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Weight (kg):</label>
+                                            <input id="weight" type="text" name="weight" class="form-control" value="{{ user.weight }}" readonly>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">BMI:</label>
+                                            <input id="bmi" type="text" name="bmi" class="form-control" value="{{ user.bmi }}" readonly>
+                                        </div>
+                                    </div>   
+                                </div>
+                                <div class="alert alert-light rounded-3 p-3 width-90 ms-4">
+                                    <h5 class="mb-3"><i class="fas fa-address-book me-3"></i>Contact Information</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Address:</label>
+                                        <input type="text" name="address" class="form-control" value="{{ user.address }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Phone Number:</label>
+                                        <input type="text" name="phone_number" class="form-control" value="{{ user.phone_number }}" readonly>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">City:</label>
+                                            <input id="city" type="text" name="city" class="form-control" value="{{ user.city }}" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">State:</label>
+                                            <input id="state" type="text" name="state" class="form-control" value="{{ user.state }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-1">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Country:</label>
+                                            <input id="country" type="text" name="country" class="form-control" value="{{ user.country }}" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Pin Code:</label>
+                                            <input type="text" name="zip_code" class="form-control" value="{{ user.zip_code }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if user.is_doctor %}
+                                <!-- Doctor Details -->
+                                <div class="alert alert-light rounded-3 p-3 width-90 ms-4">
+                                    <h5 class="mb-3"><i class="fas fa-info-circle me-3"></i>Other Details</h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Medical License Number:</label>
+                                        <input type="text" name="medical_license_number" class="form-control" value="{{ user.medical_license_number }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Specialization:</label>
+                                        <select id="docspec" name="specialization" class="form-control" disabled>
+                                            <option value="" disabled>Select Specialization</option>
+                                            <option value="General Physician" {% if user.specialization == "General Physician" %}selected{% endif %}>General Physician</option>
+                                            <option value="Cardiologist" {% if user.specialization == "Cardiologist" %}selected{% endif %}>Cardiologist</option>
+                                            <option value="Endocrinologist" {% if user.specialization == "Endocrinologist" %}selected{% endif %}>Endocrinologist</option>
+                                            <option value="Pulmonologist" {% if user.specialization == "Pulmonologist" %}selected{% endif %}>Pulmonologist</option>
+                                            <option value="Neurologist" {% if user.specialization == "Neurologist" %}selected{% endif %}>Neurologist</option>
+                                            <option value="Hepatologist" {% if user.specialization == "Hepatologist" %}selected{% endif %}>Hepatologist</option>
+                                            <option value="Oncologist" {% if user.specialization == "Oncologist" %}selected{% endif %}>Oncologist</option>
+                                            <option value="Nephrologist" {% if user.specialization == "Nephrologist" %}selected{% endif %}>Nephrologist</option>
+                                            <option value="Gastroenterologist" {% if user.specialization == "Gastroenterologist" %}selected{% endif %}>Gastroenterologist</option>
+                                            <option value="Rheumatologist" {% if user.specialization == "Rheumatologist" %}selected{% endif %}>Rheumatologist</option>
+                                            <option value="Allergist/Immunologist" {% if user.specialization == "Allergist/Immunologist" %}selected{% endif %}>Allergist/Immunologist</option>
+                                            <option value="Pulmonary Critical Care" {% if user.specialization == "Pulmonary Critical Care" %}selected{% endif %}>Pulmonary Critical Care</option>
+                                            <option value="Geriatrician" {% if user.specialization == "Geriatrician" %}selected{% endif %}>Geriatrician</option>
+                                            <option value="Endoscopic Surgeon" {% if user.specialization == "Endoscopic Surgeon" %}selected{% endif %}>Endoscopic Surgeon</option>
+                                            <option value="Internal Medicine" {% if user.specialization == "Internal Medicine" %}selected{% endif %}>Internal Medicine</option>
+                                            <option value="Psychiatrist" {% if user.specialization == "Psychiatrist" %}selected{% endif %}>Psychiatrist</option>
+                                            <option value="Pediatrician" {% if user.specialization == "Pediatrician" %}selected{% endif %}>Pediatrician</option>
+                                            <option value="Thoracic Surgeon" {% if user.specialization == "Thoracic Surgeon" %}selected{% endif %}>Thoracic Surgeon</option>
+                                            <option value="Vascular Surgeon" {% if user.specialization == "Vascular Surgeon" %}selected{% endif %}>Vascular Surgeon</option>
+                                            <option value="Dermatologist" {% if user.specialization == "Dermatologist" %}selected{% endif %}>Dermatologist</option>
+                                            <option value="ENT Specialist" {% if user.specialization == "ENT Specialist" %}selected{% endif %}>ENT Specialist</option>
+                                            <option value="Radiologist" {% if user.specialization == "Radiologist" %}selected{% endif %}>Radiologist</option>
+                                            <option value="Anesthesiologist" {% if user.specialization == "Anesthesiologist" %}selected{% endif %}>Anesthesiologist</option>
+                                            <option value="Sports Medicine Specialist" {% if user.specialization == "Sports Medicine Specialist" %}selected{% endif %}>Sports Medicine Specialist</option>
+                                            <option value="Community Medicine Specialist" {% if user.specialization == "Community Medicine Specialist" %}selected{% endif %}>Community Medicine Specialist</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Qualification: <i class="fas fa-question-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Enter your medical degrees separated by commas (e.g., MBBS, MD, DM)"></i></label>
+                                        <input type="text" name="degree" class="form-control" value="{{ user.degree }}" readonly>
+                                    </div>
+                                    <div class="row mt-1 mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Experience(Years):</label>
+                                            <input type="text" name="experience" class="form-control" value="{{ user.experience }}" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Registration Number:</label>
+                                            <input type="text" name="registration" class="form-control" value="{{ user.registration }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Hospital:</label>
+                                        <input type="text" name="hospital" class="form-control" value="{{ user.hospital }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">About Me:</label>
+                                        <input type="text" name="about" class="form-control" value="{{ user.about }}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Office Hours: <i class="fas fa-question-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Enter your office hours (e.g., Monday-Saturday: 9am-5pm)"></i></label>
+                                        <input type="text" name="office_hours" class="form-control" value="{{ user.office_hours }}" readonly>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                            </div>
+
+                            <!-- Right Side: Profile Picture -->
+                            <div class="col-md-4 text-center ms-4 wd-36">
+                                <div class="profile-picture-container p-5">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" class="profile-picture mt-2">
+                                    {% else %}
+                                        <img src="/static/images/default_profile.jpg" class="profile-picture mt-2">
+                                    {% endif %}
+                                    <div class="mt-3">
+                                        <input type="file" name="profile_picture" class="form-control d-none" id="profileUpload" disabled>
+                                        <label for="profileUpload" class="btn btn-sm btn-outline-secondary"><i class="fas fa-camera"></i> Change Photo</label>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        {% if user.is_doctor %}
+                                            <h5 class="mb-2">Dr. {{ user.name }} </h5>
+                                            <span class="mb-2">{{ user.degree }}</span>
+                                            <p class="text-muted mb-2">
+                                                {{ user.specialization }}
+                                            </p>
+                                            <p class="text-muted mb-2 mt-3">
+                                                <strong>About: </strong>{{ user.about }}
+                                            </p>
+                                        {% else %}
+                                            <h5 class="mb-2">{{ user.name }}, {{ user.age }}</h5>
+                                            <p class="text-muted mb-2">
+                                                {{ user.city }}, {{ user.state }}, {{ user.country }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="mt-4">
+                            <button type="button" id="editProfileBtn" class="btn btn-warning px-4"><i class="fas fa-edit"></i> Edit Profile</button>
+                            <button type="submit" id="saveProfileBtn" class="btn btn-success px-4 d-none"><i class="fas fa-save"></i> Save Changes</button>
+                            <button type="button" id="cancelEditBtn" class="btn btn-danger px-4 d-none"><i class="fas fa-times"></i> Cancel</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>  
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('editProfileBtn').addEventListener('click', function() {
+        let inputs = document.querySelectorAll('#editProfileForm input');
+        inputs.forEach(input => {
+            if (input.id !== 'bmi') {  // Exclude BMI field
+                input.removeAttribute('readonly');
+                input.removeAttribute('disabled');
+            }
+        });
+        var isPatient = {{ user.is_patient|yesno:"true,false" }};
+        var isDoctor = {{ user.is_doctor|yesno:"true,false" }};
+
+        if(isPatient){
+            document.getElementById('gender').disabled = false;
+        } else if(isDoctor){
+            document.getElementById('docspec').disabled = false;
+        }
+        
+        document.getElementById('editProfileBtn').classList.add('d-none');  // Hide Edit button
+        document.getElementById('saveProfileBtn').classList.remove('d-none');  // Show Save button
+        document.getElementById('cancelEditBtn').classList.remove('d-none');  // Show Cancel button
+
+    });
+
+    document.getElementById('cancelEditBtn').addEventListener('click', function() {
+        let inputs = document.querySelectorAll('#editProfileForm input');
+        inputs.forEach(input => input.setAttribute('readonly', 'readonly'));
+        inputs.forEach(input => input.setAttribute('disabled','true'));
+        var isPatient = {{ user.is_patient|yesno:"true,false" }};
+        var isDoctor = {{ user.is_doctor|yesno:"true,false" }};
+        if(isPatient){
+            document.getElementById('gender').disabled = true;
+        } else if(isDoctor){
+            document.getElementById('docspec').disabled = true;
+        }
+        
+        document.getElementById('editProfileBtn').classList.remove('d-none');
+        document.getElementById('saveProfileBtn').classList.add('d-none');
+        document.getElementById('cancelEditBtn').classList.add('d-none');
+
+    });
+
+    document.addEventListener("DOMContentLoaded", calculateBMI);
+    document.getElementById("height").addEventListener("input", calculateBMI);
+    document.getElementById("weight").addEventListener("input", calculateBMI);
+
+    function calculateBMI() {
+        let height = parseFloat(document.getElementById('height').value) / 100; // Convert cm to meters
+        let weight = parseFloat(document.getElementById('weight').value);
+        let bmiField = document.getElementById('bmi');
+        let indicator = document.getElementById('bmi-indicator');
+    
+        if (!isNaN(height) && !isNaN(weight) && height > 0) {
+            let bmi = (weight / (height * height)).toFixed(1);
+            bmiField.value = bmi;
+            
+            // Determine BMI category
+            let status = '';
+            let color = '';
+            if (bmi < 18.5) {
+                status = 'Underweight';
+                color = 'text-warning';
+            } else if (bmi >= 18.5 && bmi < 24.9) {
+                status = 'Healthy';
+                color = 'text-success';
+            } else {
+                status = 'Overweight';
+                color = 'text-danger';
+            }
+    
+            indicator.textContent = status;
+            indicator.className = `mt-4 bmiindicator fw-bold text-uppercase ${color}`;
+        } else {
+            bmiField.value = '';
+            indicator.textContent = '';
+        }
+    }
+</script>
+{% endblock %}

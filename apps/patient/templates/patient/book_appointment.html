@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<div class="background-container2">
+    <div>
+        <h1 class="profile-head mb-4">Book Appointment</h1>
+        <p class="profile-note">Here, you can book an appointment with a specialized doctor, choose a suitable time, and discuss your health concerns.</p>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row justify-content-center mt-25">
+        <div class="col-md-8">
+            <div class="card shadow p-5">
+                <div class="text-white mb-2">
+                    <h4 class="text-primary"><i class="fas fa-calendar-plus"></i> Book an Appointment</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="appointmentForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="specialization" class="form-label fw-bold text-muted">Select Specialization:</label>
+                            <select class="form-select" id="specialization" name="specialization">
+                                <option value="" class="text-muted fw-bold ">Select Specialization...</option>
+                                {% for value, label in form.specialization.field.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="doctor" class="form-label fw-bold text-muted">Choose the Doctor:</label>
+                            <select class="form-select" id="doctor" name="doctor">
+                                <option value="">Select a doctor</option>
+                            </select>
+                        </div>
+
+                        <div id="doctorProfileContainer" class="mb-3" style="display: none;">
+                            <a id="doctorProfileLink" href="#" class="btn btn-outline-primary px-3 py-1 d-inline-flex align-items-center" target="_blank">
+                                <i class="fas fa-user-md me-2"></i> View Doctor Profile
+                            </a>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="date" class="form-label fw-bold text-muted">Appointment Date & Time:</label>
+                            <input type="datetime-local" class="form-control" name="date" id="appointmentDate" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="prediction_result" class="form-label fw-bold text-muted">Prediction Result</label>
+                            <input type="text" class="form-control" name="prediction_result" id="predictionResult" placeholder="Book from the Prediction Result to attach the prediction [optional]." value="{{ referrer }}" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reason" class="form-label fw-bold text-muted">Reason for Appointment:</label>
+                            <textarea class="form-control" name="reason" rows="3" required></textarea>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-check"></i> Book Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("specialization").addEventListener("change", function() {
+        var specialization = this.value;
+        var doctorSelect = document.getElementById("doctor");
+        var profileContainer = document.getElementById("doctorProfileContainer");
+        var profileLink = document.getElementById("doctorProfileLink");
+        doctorSelect.innerHTML = '<option value="">Loading...</option>';
+
+        profileContainer.style.display = "none"; 
+
+        fetch(`/doctor/get-doctors/?specialization=${specialization}`)
+        .then(response => response.json())
+        .then(data => {
+            doctorSelect.innerHTML = '<option value="">Select a doctor</option>';
+            data.forEach(doctor => {
+                doctorSelect.innerHTML += `<option value="${doctor.id}" data-profile-url="/patient/doctor_profile/${doctor.id}/">Dr. ${doctor.name}</option>`;
+            });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let dateInput = document.getElementById("appointmentDate");
+        let now = new Date();
+        now.setHours(now.getHours() + 2);
+        let minDateTime = now.toISOString().slice(0, 16);
+        dateInput.min = minDateTime;
+
+        dateInput.addEventListener("change", function () {
+            let selectedDate = new Date(this.value);
+            if (selectedDate < now) {
+                alert("Please select a time at least 2 hours from now.");
+                this.value = "";
+            }
+        });
+    });
+
+    document.getElementById("doctor").addEventListener("change", function() {
+        var selectedOption = this.options[this.selectedIndex];
+        var profileUrl = selectedOption.getAttribute("data-profile-url");
+        var profileContainer = document.getElementById("doctorProfileContainer");
+        var profileLink = document.getElementById("doctorProfileLink");
+
+        if (profileUrl) {
+            profileLink.href = profileUrl;
+            profileContainer.style.display = "block";
+        } else {
+            profileContainer.style.display = "none";
+        }
+    });
+</script>
+
+{% endblock %}

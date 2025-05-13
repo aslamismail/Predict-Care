@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card">
+            <div class="card-header">Treatment Plan</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Patient Information</h5>
+                        <p><strong>Name:</strong> {{ patient.username }}</p>
+                        <p><strong>Age:</strong> {{ patient.age }}</p>
+                        <p><strong>Gender:</strong> {{ patient.gender }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Medical Predictions</h5>
+                        {% for prediction in disease_predictions %}
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <p><strong>{{ prediction.get_disease_type_display }}:</strong> {{ prediction.prediction_result }}</p>
+                                    <p><strong>Severity:</strong> {{ prediction.severity_level }}</p>
+                                    <p><strong>Recommended Treatment:</strong> {{ prediction.recommended_treatment }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="treatment_notes" class="form-label">Treatment Notes</label>
+                        <textarea class="form-control" id="treatment_notes" name="treatment_notes" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="follow_up_date" class="form-label">Follow-up Date</label>
+                        <input type="date" class="form-control" id="follow_up_date" name="follow_up_date">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Treatment Plan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

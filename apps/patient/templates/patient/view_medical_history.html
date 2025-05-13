@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<div class="background-container2">
+    <div>
+        <h1 class="profile-head mb-4">Medical History</h1>
+        <p class="profile-note">Here, you can view your medical details, update your health information, and enhance your predictions for more accurate results. Keeping your records up to date ensures better insights and personalized recommendations.</p>
+    </div>
+</div>
+
+{% if medical_history %}
+    <div class="container d-flex justify-content-center">
+        <div class="card shadow p-5 w-80 mt-20" style="width: 80%;">
+            <h4 class="text-primary"><i class="fa-solid fa-notes-medical"></i> Your Medical History</h4>
+            <hr>
+
+            <form method="POST" id="medicalHistoryForm" action="{% url 'patient:medical_history' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="row p-3">
+                        <h6 class="text-muted poppins mb-3 red-bp"><i class="fas fa-tachometer-alt me-1"></i> Blood Pressure:</h6>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="systolic_bp" class="form-label fw-bold">Systolic BP:</label>
+                                <input type="text" id="systolic_bp" name="systolic_bp" class="form-control editable-field" value="{{ medical_history.systolic_bp|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="diastolic_bp" class="form-label fw-bold">Diastolic BP:</label>
+                                <input type="text" id="diastolic_bp" name="diastolic_bp" class="form-control editable-field" value="{{ medical_history.diastolic_bp|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="blood_pressure" class="form-label fw-bold">Blood Pressure (General):</label>
+                                <input type="text" id="blood_pressure" name="blood_pressure" class="form-control editable-field" value="{{ medical_history.blood_pressure|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row p-3">
+                        <h6 class="text-muted poppins mb-3 yellow-chol"><i class="fas fa-droplet me-1"></i> Cholesterol:</h6>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cholesterol_level" class="form-label fw-bold">Cholesterol (General):</label>
+                                <input type="text" id="cholesterol_level" name="cholesterol_level" class="form-control editable-field" value="{{ medical_history.cholesterol_level|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cholesterol_ldl" class="form-label fw-bold">Cholesterol LDL:</label>
+                                <input type="text" id="cholesterol_ldl" name="cholesterol_ldl" class="form-control editable-field" value="{{ medical_history.cholesterol_ldl|default:'Not provided' }}" readonly> 
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cholesterol_hdl" class="form-label fw-bold">Cholesterol HDL:</label>
+                                <input type="text" id="cholesterol_hdl" name="cholesterol_hdl" class="form-control editable-field" value="{{ medical_history.cholesterol_hdl|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cholesterol_triglycerides" class="form-label fw-bold">Cholesterol Triglycerides:</label>
+                                <input type="text" id="cholesterol_triglycerides" name="cholesterol_triglycerides" class="form-control editable-field" value="{{ medical_history.cholesterol_triglycerides|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row p-3">
+                        <h6 class="text-muted poppins mb-3 green-cvh"><i class="fas fa-heart-pulse me-1"></i> Cardiovascular Helath:</h6>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="smoking_status" class="form-label fw-bold">Smoking Status:</label>
+                                <select class="form-control editable-selections" id="smoking_status" name="smoking_status" disabled>
+                                    <option value="non_smoker" {% if medical_history.smoking_status == "non_smoker" %}selected{% endif %}>Non-Smoker</option>
+                                    <option value="current_smoker" {% if medical_history.smoking_status == "current_smoker" %}selected{% endif %}>Current Smoker</option>
+                                    <option value="ex_smoker" {% if medical_history.smoking_status == "ex_smoker" %}selected{% endif %}>Ex-Smoker</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="alcohol_consumption" class="form-label fw-bold">Alcohol Consumption:</label>
+                                <select class="form-control editable-selections" id="alcohol_consumption" name="alcohol_consumption" disabled>
+                                    <option value="none" {% if medical_history.alcohol_consumption == "none" %}selected{% endif %}>None</option>
+                                    <option value="occasional" {% if medical_history.alcohol_consumption == "occasional" %}selected{% endif %}>Occasional</option>
+                                    <option value="moderate" {% if medical_history.alcohol_consumption == "moderate" %}selected{% endif %}>Moderate</option>
+                                    <option value="heavy" {% if medical_history.alcohol_consumption == "heavy" %}selected{% endif %}>Heavy</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="heart_rate" class="form-label fw-bold">Heart Rate:</label>
+                                <input type="text" id="heart_rate" name="heart_rate" class="form-control editable-field" value="{{ medical_history.heart_rate|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row p-3">
+                        <h6 class="text-muted poppins mb-3 blue-mtb"><i class="fas fa-heart-circle-bolt me-1"></i> Metabolic Helath:</h6>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="blood_sugar" class="form-label fw-bold">Sugar:</label>
+                                <input type="text" id="blood_sugar" name="blood_sugar" class="form-control editable-field" value="{{ medical_history.blood_sugar|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hba1c_level" class="form-label fw-bold">HbA1c:</label>
+                                <input type="text" id="hba1c_level" name="hba1c_level" class="form-control editable-field" value="{{ medical_history.hba1c_level|default:'Not provided' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                            
+                </div>
+
+                <!-- Family History Section -->
+                <div class="mt-2 mb-2 p-4 bg-light border rounded">
+                    <h5 class="text-primary"><i class="fa-solid fa-heart-circle-plus"></i> Family History</h5>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input editable-checkbox" id="family_history_heart_disease" name="family_history_heart_disease" {% if medical_history.family_history_heart_disease %} checked {% endif %} disabled>
+                                <label for="family_history_heart_disease" class="form-check-label">Heart Disease</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input editable-checkbox" id="family_history_diabetes" name="family_history_diabetes" {% if medical_history.family_history_diabetes %} checked {% endif %} disabled>
+                                <label for="family_history_diabetes" class="form-check-label">Diabetes</label>
+                            </div>
+                            <div class="form-check mb-1">
+                                <input type="checkbox" class="form-check-input editable-checkbox" id="family_history_lungcancer" name="family_history_lungcancer" {% if medical_history.family_history_lungcancer %} checked {% endif %} disabled>
+                                <label for="family_history_lungcancer" class="form-check-label">Blood Cancer</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input editable-checkbox" id="family_history_asthma" name="family_history_asthma" {% if medical_history.family_history_asthma %} checked {% endif %} disabled>
+                                <label for="family_history_asthma" class="form-check-label">Asthma</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input editable-checkbox" id="family_history_liver_disease" name="family_history_liver_disease" {% if medical_history.family_history_liver_disease %} checked {% endif %} disabled>
+                                <label for="family_history_liver_disease" class="form-check-label">Liver Disease</label>
+                            </div>
+                            <div class="form-check mb-1">
+                                <input type="checkbox" class="form-check-input editable-checkbox" id="family_history_parkinsons" name="family_history_parkinsons" {% if medical_history.family_history_parkinsons %} checked {% endif %} disabled>
+                                <label for="family_history_parkinsons" class="form-check-label">Parkinson’s</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Conditions -->
+                <h6 class="text-muted poppins mt-3"><i class="fas fa-info-circle me-1"></i> Other Details:</h6>
+                <div class="mt-3">
+                    <label for="existing_conditions" class="form-label fw-bold">Existing Conditions:</label>
+                    <textarea id="existing_conditions" name="existing_conditions" class="form-control editable-field" readonly>{{ medical_history.existing_conditions|default:"Nil" }}</textarea>
+                </div>
+
+                <!-- Current Medications -->
+                <div class="mt-3">
+                    <label for="current_medications" class="form-label fw-bold">Current Medications:</label>
+                    <textarea id="current_medications" name="current_medications" class="form-control editable-field" readonly>{{ medical_history.current_medications|default:"Nil" }}</textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="mt-4 text-center">
+                    <button type="button" id="editBtn" class="btn btn-primary px-4"><i class="fas fa-edit"></i> Update Medical History</button>
+                    <button type="submit" id="saveBtn" class="btn btn-success px-4 d-none"><i class="fas fa-save"></i> Save Changes</button>
+                    <button type="button" id="cancelBtn" class="btn btn-danger px-4 d-none"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning d-flex align-items-center justify-content-between p-4 rounded shadow mt-34" style="max-width: 80%; margin: auto;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-circle fa-2x text-warning me-3"></i>
+            <div>
+                <h5 class="fw-bold mb-1">Incomplete Medical History</h5>
+                <p class="mb-0 text-muted">You haven't completed your medical history. Updating your details can improve prediction accuracy.</p>
+            </div>
+        </div>
+        <a href="{% url 'patient:medical_history' %}" class="btn btn-sm btn-primary px-4">Complete Now</a>
+    </div>
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const editBtn = document.getElementById("editBtn");
+        const saveBtn = document.getElementById("saveBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
+        const fields = document.querySelectorAll(".editable-field");
+        const checkboxes = document.querySelectorAll(".editable-checkbox");
+        const selections = document.querySelectorAll(".editable-selections");
+
+        editBtn.addEventListener("click", function () {
+            fields.forEach(field => field.removeAttribute("readonly"));
+            checkboxes.forEach(checkbox => checkbox.removeAttribute("disabled"));
+            selections.forEach(selection => selection.removeAttribute("disabled"));
+            editBtn.classList.add("d-none");
+            saveBtn.classList.remove("d-none");
+            cancelBtn.classList.remove("d-none");
+        });
+
+        cancelBtn.addEventListener("click", function () {
+            fields.forEach(field => field.setAttribute("readonly", true));
+            checkboxes.forEach(checkbox => checkbox.setAttribute("disabled", true));
+            selections.forEach(selection => selection.setAttribute("disabled", true));
+            editBtn.classList.remove("d-none");
+            saveBtn.classList.add("d-none");
+            cancelBtn.classList.add("d-none");
+        });
+    });
+</script>
+{% endblock %}

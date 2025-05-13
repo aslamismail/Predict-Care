@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg rounded-3">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">Medical History Form</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="blood_pressure" class="form-label fw-bold">Blood Pressure</label>
+                                <input type="text" class="form-control" id="blood_pressure" name="blood_pressure">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cholesterol_level" class="form-label fw-bold">Cholesterol Level</label>
+                                <input type="number" step="0.1" class="form-control" id="cholesterol_level" name="cholesterol_level">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="heart_rate" class="form-label fw-bold">Heart Rate</label>
+                                <input type="text" class="form-control" id="heart_rate" name="heart_rate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="blood_sugar" class="form-label fw-bold">Sugar</label>
+                                <input type="number" step="0.1" class="form-control" id="blood_sugar" name="blood_sugar">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="hba1c_level " class="form-label fw-bold">HbA1c</label>
+                                <input type="text" class="form-control" id="hba1c_level " name="hba1c_level ">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="systolic_bp" class="form-label fw-bold">Systolic BP</label>
+                                <input type="number" step="0.1" class="form-control" id="systolic_bp" name="systolic_bp">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="diastolic_bp " class="form-label fw-bold">Diastolic BP</label>
+                                <input type="text" class="form-control" id="diastolic_bp " name="diastolic_bp ">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cholesterol_ldl" class="form-label fw-bold">Cholesterol LDL</label>
+                                <input type="number" step="0.1" class="form-control" id="cholesterol_ldl" name="cholesterol_ldl">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cholesterol_hdl " class="form-label fw-bold">Cholesterol HDL</label>
+                                <input type="text" class="form-control" id="cholesterol_hdl " name="cholesterol_hdl ">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cholesterol_triglycerides" class="form-label fw-bold">Cholesterol Triglycerides</label>
+                                <input type="number" step="0.1" class="form-control" id="cholesterol_triglycerides" name="cholesterol_triglycerides">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="smoking_status" class="form-label fw-bold">Smoking Status</label>
+                                <select class="form-select" id="smoking_status" name="smoking_status">
+                                    <option value="non_smoker">Non-Smoker</option>
+                                    <option value="current_smoker">Current Smoker</option>
+                                    <option value="ex_smoker">Ex-Smoker</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="alcohol_consumption" class="form-label fw-bold">Alcohol Consumption</label>
+                                <select class="form-select" id="alcohol_consumption" name="alcohol_consumption">
+                                    <option value="none">None</option>
+                                    <option value="occasional">Occasional</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="heavy">Heavy</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Family History</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="family_history_diabetes" name="family_history_diabetes">
+                                        <label class="form-check-label" for="family_history_diabetes">Diabetes</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="family_history_heart_disease" name="family_history_heart_disease">
+                                        <label class="form-check-label" for="family_history_heart_disease">Heart Disease</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="family_history_lungcancer" name="family_history_lungcancer">
+                                        <label class="form-check-label" for="family_history_lungcancer">Blood Cancer</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="family_history_asthma" name="family_history_asthma">
+                                        <label class="form-check-label" for="family_history_asthma">Asthma</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="family_history_liver_disease" name="family_history_liver_disease">
+                                        <label class="form-check-label" for="family_history_liver_disease">Liver Disease</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="family_history_parkinsons" name="family_history_parkinsons">
+                                        <label class="form-check-label" for="family_history_parkinsons">Parkinson’s</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="existing_conditions" class="form-label fw-bold">Existing Conditions</label>
+                            <textarea class="form-control" id="existing_conditions" name="existing_conditions" rows="3" placeholder="List any existing medical conditions"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="current_medications" class="form-label fw-bold">Current Medications</label>
+                            <textarea class="form-control" id="current_medications" name="current_medications" rows="3" placeholder="List any current medications"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Save Medical History</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

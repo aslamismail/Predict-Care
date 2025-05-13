@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.3.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+{% endblock %}
+
+{% block content %}
+<div id="report-content" class="container py-4">
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="custom-card custom-card-main">
+                <div class="card-body p-4 card-body-custom">
+                    <!-- Header Section -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0">{{ prediction.get_disease_type_display }} Prediction Results</h2>
+                        <span class="text-muted" id="currentDate"></span>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <strong>Important Disclaimer:</strong> The results presented here are based on predictive modeling and should <strong>not</strong> be considered a final medical diagnosis. Please consult a qualified healthcare professional for accurate assessment and medical advice. Do <strong>not</strong> make any medical decisions solely based on this report.
+                    </div>
+
+                    <!-- Main Result Section -->
+                    <div class="alert {% if prediction.prediction_result == 'Positive' %}alert-danger2{% else %}alert-success{% endif %} d-flex align-items-center custom-result">
+                        <i class="fas {% if prediction.prediction_result == 'Positive' %}bi bi-exclamation-triangle{% else %}fa-check-circle{% endif %} me-2"></i>
+                        Prediction Result:&nbsp;  <strong>{{ prediction.prediction_result }}</strong>
+                    </div>
+                    <p class="mt-1 p-1" style="font-size:13px">
+                        {% if prediction.prediction_result == 'Positive' %}
+                            <i>Note: This indicates a potential risk. Please consult a healthcare professional for further evaluation.</i>
+                        {% else %}
+                            <i>Note: No immediate concerns detected. Maintain a healthy lifestyle and regular check-ups.</i>
+                        {% endif %}
+                    </p>
+
+                    <!-- Risk Factor Analysis -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="custom-card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-heart-pulse me-2"></i> Risk Factor Analysis</h5>
+                                </div>
+                                <div class="card-body card-body-custom">
+                                    <div id="riskFactorsChart" style="width: 100%; height: 300px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="custom-card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i> Health Metrics Analysis</h5>
+                                </div>
+                                <div class="card-body card-body-custom">
+                                    <div id="trendChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Score and Severity -->
+                    <div class="custom-card mb-2">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"> <i class="bi bi-clipboard-heart me-2"></i> Treatment Plan</h5>
+                        </div>
+                        <div class="card-body">
+                    
+                            <!-- Confidence Score & Severity Level Row -->
+                            <div class="d-flex flex-wrap">
+                                <div class="w-50 p-3">
+                                    <div class="mb-6">
+                                        <div>
+                                            <h6 class="mb-0">Confidence Score:</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="progress custom-progress">
+                                                <div id="confidenceProgressBar" class="progress-bar" role="progressbar"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <span class="text-muted">Score</span>
+                                                <span class="fw-bold" id="confidencePercentage"></span>
+                                            </div>
+                                        <p class="mt-3" style="font-size:11px"><i>Note: A high confidence score indicates the model is highly certain about its prediction.!</i></p>
+                                        </div>
+                                    </div>
+                                </div>
+                    
+                                <div class="severity-container">
+                                    <h6 class="mb-3 text-uppercase">Severity Level</h6>
+                                    <div class="severity-meter">
+                                        <div class="severity-track">
+                                            <div class="severity-bar" id="severityBar"></div>
+                                        </div>
+                                        <div class="severity-labels">
+                                            <span>Low</span>
+                                            <span>Moderate</span>
+                                            <span>High</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <strong class="severity-text" id="severityLabel">{{ prediction.severity_level }}</strong>
+                                    </div>
+                                </div>                            
+                            </div>
+                            <!-- Recommended Treatment -->
+                            {% if prediction.recommended_treatment %}
+                            <div class="p-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Recommended Treatment:</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="recommendedTreatmentList" class="list-group"></ul>
+                                </div>
+                            </div>
+                            {% endif %}
+                    
+                        </div>
+                    </div>
+
+                    {% if prediction.preventive_measures %}
+                    <div class="custom-card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i> Preventive Measures</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul id="preventMeasureList" class="list-group"></ul>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div id="button-div" class="text-center mt-4">
+                        {% if request.user.is_patient %}
+                        <a href="{% url 'prediction:dashboard' %}" class="btn btn-secondary px-4">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                        </a>
+                        {% endif %}
+                        <button id="download-pdf" class="btn btn-primary px-4">
+                            <i class="fas fa-file-pdf me-2"></i> Download Report
+                        </button>
+                        {% if request.user.is_patient %}
+                        <a href="{% url 'patient:book_appointment' %}?referrer={{ request.path }}" class="btn btn-warning px-4">
+                            <i class="fas fa-calendar-alt me-2"></i> Book an Appointment
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('currentDate').textContent = "Report Date: " + "{{ prediction.predicted_at|date:'d/m/Y' }}";
+
+    const confidenceScore = {{ prediction.confidence_score }};
+    const confidencePercentage = (confidenceScore*100).toFixed(1) + "%";
+    document.getElementById('confidenceProgressBar').style.width = confidencePercentage;
+    document.getElementById('confidencePercentage').textContent = confidencePercentage;
+
+    const severityLevel = "{{ prediction.severity_level }}";  
+    const severityBar = document.getElementById("severityBar");
+
+    let position = "0%";  
+    if (severityLevel === "Moderate Risk") {
+        position = "50%"; 
+    } else if (severityLevel === "High Risk") {
+        position = "100%"; 
+    }
+
+    severityBar.style.left = position; 
+
+    google.charts.load("current", { packages: ["corechart"] });
+    google.charts.setOnLoadCallback(drawCharts);
+
+    function drawCharts() {
+        drawRiskFactorsChart();
+        drawHealthAnalysisChart();
+    }
+
+    let rawTreatment = "{{ prediction.recommended_treatment|escapejs }}";
+
+    let treatmentItems = rawTreatment.split(',').map(item => item.trim());
+    let treatmentList = document.getElementById("recommendedTreatmentList");
+
+    treatmentItems.forEach((treatment) => {
+        if (treatment) {
+            let listItem = document.createElement("li");
+            listItem.className = "d-flex align-items-center p-2";
+            listItem.innerHTML = `<i class="bi bi-capsule-pill text-info me-2"></i> ${treatment}`;
+            treatmentList.appendChild(listItem);
+        }
+    });
+
+    let preventMeasure = "{{ prediction.preventive_measures|escapejs }}";
+
+    let preventItems = preventMeasure.split(',').map(item => item.trim());
+    let preventList = document.getElementById("preventMeasureList");
+
+    preventItems.forEach((prevent) => {
+        if (prevent) {
+            let listItem2 = document.createElement("li");
+            listItem2.className = "d-flex align-items-center p-2";
+            listItem2.innerHTML = `<i class="bi bi-heart-pulse-fill text-danger me-2"></i> ${prevent}`;
+            preventList.appendChild(listItem2);
+        }
+    });
+
+
+    function drawRiskFactorsChart() {
+        var riskFactors = "{{ prediction.risk_factors }}".split(',').map(factor => factor.trim());
+
+        // Distribute 100% among the risk factors
+        var totalRiskFactors = riskFactors.length;
+        var factorValues = Array(totalRiskFactors).fill(Math.floor(100 / totalRiskFactors));
+        factorValues[0] += 100 - factorValues.reduce((sum, val) => sum + val, 0); // Adjust rounding
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Risk Factor');
+        data.addColumn('number', 'Percentage');
+
+        for (var i = 0; i < riskFactors.length; i++) {
+            data.addRow([riskFactors[i], factorValues[i]]);
+        }
+
+        var options = {
+            title: "Risk Factor Analysis",
+            pieHole: 0.7, // Creates the hollow (doughnut) effect
+            slices: {
+                0: { color: '#0088FE' },
+                1: { color: '#00C49F' },
+                2: { color: '#FFBB28' },
+                3: { color: '#FF8042' }
+            },
+            chartArea: { width: '90%', height: '80%' },
+            legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('riskFactorsChart'));
+        chart.draw(data, options);
+    }
+
+    function drawHealthAnalysisChart() {
+        const patientValues = {{ prediction.patient_values|safe }};
+        const diseaseType = "{{ prediction.disease_type }}";
+
+        const normalRanges = {
+            BMI: [18.5, 24.9],
+            BloodGlucose: [70, 100],
+            BloodPressure: [80, 120],
+            Cholesterol: [120, 200],
+            HbA1c: [4.0, 5.6],
+            HeartRate: [60, 100],
+            LiverFunctionTest: [7, 56],
+            MoCA: [26, 30],
+            SleepTime: [7, 9],
+            UPDRS: [0, 20]
+        };
+        if(diseaseType === "diabetes"){    
+            var data = google.visualization.arrayToDataTable([
+                ["Metric", "Patient Value", "Normal Range Min", "Normal Range Max"],
+                ["BMI", patientValues.BMI, normalRanges.BMI[0], normalRanges.BMI[1]],
+                ["HbA1c", patientValues.HbA1c, normalRanges.HbA1c[0], normalRanges.HbA1c[1]],
+                ["Blood Sugar", patientValues.BloodGlucose, normalRanges.BloodGlucose[0], normalRanges.BloodGlucose[1]]
+            ]);
+        }
+        else if(diseaseType === "asthma"){
+            var data = google.visualization.arrayToDataTable([
+                ["Metric", "Patient Value", "Normal Range Min", "Normal Range Max"],
+                ["BMI", patientValues.BMI, normalRanges.BMI[0], normalRanges.BMI[1]],
+                ["Blood Pressure", patientValues.BloodPressure, normalRanges.BloodPressure[0], normalRanges.BloodPressure[1]],
+                ["Sleep Time", patientValues.SleepTime, normalRanges.SleepTime[0], normalRanges.SleepTime[1]]
+            ]);
+        }
+        else if(diseaseType === "lung_cancer"){
+            var data = google.visualization.arrayToDataTable([
+                ["Metric", "Patient Value", "Normal Range Min", "Normal Range Max"],
+                ["BMI", parseFloat(patientValues.BMI), parseFloat(normalRanges.BMI[0]), parseFloat(normalRanges.BMI[1])],
+                ["Blood Pressure", parseFloat(patientValues.BloodPressure), parseFloat(normalRanges.BloodPressure[0]), parseFloat(normalRanges.BloodPressure[1])],
+                ["Heart Rate", parseFloat(patientValues.HeartRate), parseFloat(normalRanges.HeartRate[0]), parseFloat(normalRanges.HeartRate[1])]
+            ]);
+        }
+        else if(diseaseType === "heart_disease"){
+            var data = google.visualization.arrayToDataTable([
+                ["Metric", "Patient Value", "Normal Range Min", "Normal Range Max"],
+                ["Blood Pressure", parseFloat(patientValues.BloodPressure), parseFloat(normalRanges.BloodPressure[0]), parseFloat(normalRanges.BloodPressure[1])],
+                ["Cholesterol", parseFloat(patientValues.Cholesterol), parseFloat(normalRanges.Cholesterol[0]), parseFloat(normalRanges.Cholesterol[1])],
+                ["Blood Sugar", parseFloat(patientValues.BloodGlucose), parseFloat(normalRanges.BloodGlucose[0]), parseFloat(normalRanges.BloodGlucose[1])],
+                ["Heart Rate", parseFloat(patientValues.HeartRate), parseFloat(normalRanges.HeartRate[0]), parseFloat(normalRanges.HeartRate[1])]
+            ]);
+        }
+        else if(diseaseType === "parkinsons"){
+            var data = google.visualization.arrayToDataTable([
+                ["Metric", "Patient Value", "Normal Range Min", "Normal Range Max"],
+                ["Blood Pressure", parseFloat(patientValues.BloodPressure), parseFloat(normalRanges.BloodPressure[0]), parseFloat(normalRanges.BloodPressure[1])],
+                ["Cholesterol", parseFloat(patientValues.Cholesterol), parseFloat(normalRanges.Cholesterol[0]), parseFloat(normalRanges.Cholesterol[1])],
+                ["UPDRS", parseFloat(patientValues.UPDRS), parseFloat(normalRanges.UPDRS[0]), parseFloat(normalRanges.UPDRS[1])],
+                ["MoCA", parseFloat(patientValues.MoCA), parseFloat(normalRanges.MoCA[0]), parseFloat(normalRanges.MoCA[1])]
+            ]);
+        }
+        else if(diseaseType === "liver_disease"){
+            var data = google.visualization.arrayToDataTable([
+                ["Metric", "Patient Value", "Normal Range Min", "Normal Range Max"],
+                ["BMI", patientValues.BMI, normalRanges.BMI[0], normalRanges.BMI[1]],
+                ["Cholesterol", patientValues.Cholesterol, normalRanges.Cholesterol[0], normalRanges.Cholesterol[1]],
+                ["Liver Function Test", patientValues.LiverFunctionTest, normalRanges.LiverFunctionTest[0], normalRanges.LiverFunctionTest[1]]
+            ]);
+        }
+
+        // Chart options
+        var options = {
+            title: "Health Metrics vs Normal Ranges",
+            chartArea: { width: "80%", height: "70%" },
+            hAxis: {
+                title: "Health Metrics",
+                textStyle: { fontSize: 12 }
+            },
+            vAxis: {
+                title: "Values",
+                minValue: 0
+            },
+            legend: { position: "top" },
+            bar: { groupWidth: "40%" },
+            colors: ["#E74C3C", "#3498DB", "#2ECC71"], // Red for patient, Blue for min, Green for max
+        };
+
+        // Draw the chart
+        var chart = new google.visualization.ColumnChart(document.getElementById("trendChart"));
+        chart.draw(data, options);
+    }
+});
+
+document.getElementById('download-pdf').addEventListener('click', function () {
+    const { jsPDF } = window.jspdf;
+    const targetElement = document.getElementById('report-content'); // Select report div
+    const buttonDiv = document.getElementById('button-div'); // Select button div
+
+    // Hide the button div before capturing
+    buttonDiv.style.display = 'none';
+
+    html2canvas(targetElement, { scale: 2 }).then(canvas => {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width; // Maintain aspect ratio
+        let position = 0;
+
+        if (imgHeight > 270) { // Ensure space for footer
+            while (position < imgHeight) {
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                position += 270;
+                if (position < imgHeight) pdf.addPage();
+            }
+        } else {
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
+
+        // Footer Content
+        const now = new Date();
+        const reportDate = now.toLocaleString(); // Get current date and time
+        const websiteURL = window.location.href; // Get the current page URL
+
+        pdf.setFontSize(8); // Reduce font size
+        pdf.text(`Generated on: ${reportDate}`, 10, 290); // Bottom-left
+        pdf.text(` ${websiteURL}`, 150, 290, { align: "right" }); // Bottom-right
+
+        pdf.save('report.pdf');
+
+        // Restore the button div after capturing
+        buttonDiv.style.display = 'block';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<div class="background-container">
+    <div>
+        <h1 class="profile-head mb-3"> Predict Disease</h1>
+        <p class="profile-note">Predict diseases based on your medical history, track past predictions, and manage your health insights effortlessly.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-25">
+    <div class="col-lg-10">
+        <div class="card shadow-lg border-0 rounded-4 predict-card">
+            <div class="card-body predict-card-body p-5">
+                {% if user.is_doctor %}
+                <div class="mb-3">
+                    <label for="selected_patient" class="form-label text-secondary"><i class="fas fa-user-md me-2"></i> Select Patient:</label>
+                    <select name="selected_patient" id="selected_patient" class="form-select">
+                        <option value="">-- Select a Patient --</option>
+                    </select>
+                </div>
+                {% endif %}
+                <h4 class="text-secondary predict-section-title"><i class="fas fa-notes-medical"></i> Select Disease for Prediction</h4>
+                <div class="row mt-3">
+                    {% for disease, display_name in prediction_options %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card border-0 shadow-sm text-center predict-disease-card">
+                            <div class="card-body">
+                                <i class="fas fa-shield-alt text-success fs-1"></i>
+                                <h6 class="card-title mt-2 text-dark">{{ display_name }}</h6>
+                                <a href="#" class="btn btn-outline-primary btn-sm" onclick="openPredictModal('{{ disease }}')">
+                                    <i class="fas fa-play"></i> Predict
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if user.is_patient %}
+                <div class="mt-4">
+                    <h5 class="text-secondary predict-section-title"><i class="fas fa-history"></i> Recent Predictions</h5>
+                    {% if recent_predictions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle predict-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><i class="fas fa-heartbeat"></i> Disease</th>
+                                        <th><i class="fas fa-chart-line"></i> Prediction</th>
+                                        <th><i class="fas fa-calendar-alt"></i> Date</th>
+                                        <th><i class="fas fa-cog"></i> Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prediction in recent_predictions %}
+                                    <tr>
+                                        <td>{{ prediction.get_disease_type_display }}</td>
+                                        <td>
+                                            <span class="badge {% if prediction.prediction_result == 'Positive' %}bg-danger{% else %}bg-success{% endif %}">
+                                                <i class="fas {% if prediction.prediction_result == 'Positive' %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %}"></i>
+                                                {{ prediction.prediction_result }}
+                                            </span>
+                                        </td>
+                                        <td>{{ prediction.predicted_at }}</td>
+                                        <td>
+                                            <a href="{% url 'prediction:prediction_detail' prediction.id %}" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i> View Details</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="alert alert-info text-center"><i class="fas fa-info-circle"></i> No recent predictions available</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="modal fade" id="predictModal" tabindex="-1" aria-labelledby="predictModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content shadow-lg border-0 rounded-4">
+                            <div class="modal-header bg-darkgray text-white rounded-top">
+                                <h5 class="modal-title fw-bold" id="predictModalLabel"><i class="fas fa-heartbeat me-2"></i>Disease Prediction</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-5">
+                                <div class="alert alert-warning note-box">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Note:</strong> Answer a few questions to help Predict Care assess the disease risk.  
+                                    More precise answers lead to more accurate predictions. This prediction is <strong>not final</strong>  
+                                    and should not be considered as a medical diagnosis.
+                                </div>
+                                <form id="predictionForm" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" id="diseaseType" name="diseaseType">
+                
+                                    <!-- Dynamic Question Container -->
+                                    <div id="question-container" class="mb-3">
+                                        <!-- Questions will be inserted dynamically -->
+                                    </div>
+                
+                                    <!-- Navigation Buttons -->
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-secondary px-4" id="prevQuestion" style="display: none;"><i class="fas fa-arrow-left"></i> Previous</button>
+                                        <button type="button" class="btn btn-success px-4" id="nextQuestion">Next <i class="fas fa-arrow-right"></i></button>
+                                        <button type="button" class="btn btn-success px-4" id="submitPrediction" style="display: none;"><i class="fas fa-paper-plane"></i> Submit</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPredictModal(diseaseType) {
+        document.getElementById("diseaseType").value = diseaseType;
+        currentQuestionIndex = 0;
+        userResponses = {};
+
+        if (diseaseType.toLowerCase() === "asthma") {
+            questions = [
+                { id: "HeartDisease", text: "Do you have any diagnosed heart-related conditions?", options: { "Yes": 1, "No": 0 } },
+                { id: "Stroke", text: "Have you ever had a stroke?", options: { "Yes": 1, "No": 0 } },
+                { id: "PhysicalHealth", text: "How would you rate your physical health?", options: { "Very Poor": 0, "Poor": 5, "Fair": 10, "Good": 15, "Very Good": 20, "Excellent": 25 } },
+                { id: "MentalHealth", text: "How would you rate your mental health?", options: { "Very Poor": 0, "Poor": 5, "Fair": 10, "Good": 15, "Very Good": 20, "Excellent": 25 } },
+                { id: "DiffWalking", text: "Do you have difficulty walking?", options: { "Yes": 1, "No": 0 } },
+                { id: "Race", text: "What is your race?", options: { "White": 0, "Black": 1, "Asian": 2, "American Indian/Alaskan Native": 3, "Other": 4, "Hispanic": 5 } },
+                { id: "Diabetic", text: "Are you diabetic?", options: { "Yes": 1, "No": 0 } },
+                { id: "PhysicalActivity", text: "Do you engage in physical activity?", options: { "Yes": 1, "No": 0 } },
+                { id: "GenHealth", text: "How would you rate your general health?", options: { "Poor": 0, "Fair": 1, "Good": 2, "Very Good": 3, "Excellent": 4 } },
+                { id: "SleepTime", text: "On average, how many hours do you sleep per night?", options: Object.fromEntries([...Array(24).keys()].map(i => [i+1, i+1])) }
+            ];
+        } else if (diseaseType.toLowerCase() === "lung_cancer") {
+            questions = [
+                { id: "yellow_fingers", text: "Do you have yellow fingers?", options: { "No": 1, "Yes": 2 } },
+                { id: "anxiety", text: "Do you experience anxiety?", options: { "No": 1, "Yes": 2 } },
+                { id: "peer_pressure", text: "Have you experienced peer pressure related to smoking?", options: { "No": 1, "Yes": 2 } },
+                { id: "chronic_disease", text: "Do you have any chronic diseases?", options: { "No": 1, "Yes": 2 } },
+                { id: "fatigue", text: "Do you frequently experience fatigue?", options: { "No": 1, "Yes": 2 } },
+                { id: "allergy", text: "Do you have any allergies?", options: { "No": 1, "Yes": 2 } },
+                { id: "wheezing", text: "Do you experience wheezing?", options: { "No": 1, "Yes": 2 } },
+                { id: "coughing", text: "Do you have a persistent cough?", options: { "No": 1, "Yes": 2 } },
+                { id: "shortness_of_breath", text: "Do you experience shortness of breath?", options: { "No": 1, "Yes": 2 } },
+                { id: "swallowing_difficulty", text: "Do you have difficulty swallowing?", options: { "No": 1, "Yes": 2 } },
+                { id: "chest_pain", text: "Do you experience chest pain?", options: { "No": 1, "Yes": 2 } }
+            ];
+        } else if (diseaseType.toLowerCase() === "heart_disease") {
+            questions = [
+                { id: "chest_pain_type", text: "What type of chest pain do you experience?", options: { "Mild Pain": 1, "Moderate Pain": 2, "Severe Pain": 3, "Very Severe Pain": 4 } },
+                { id: "resting_ecg", text: "What was your resting ECG result?", options: { "Normal": 0, "ST-T wave abnormality": 1, "Left ventricular hypertrophy": 2 } },
+                { id: "exercise_angina", text: "Do you experience angina (chest pain) during exercise?", options: { "No": 0, "Yes": 1 } },
+                { id: "oldpeak", text: "What is your ST depression induced by exercise (Oldpeak)?", type: Number }, // This will be a number input field
+                { id: "ST_slope", text: "What is your ST segment slope during peak exercise?", options: { "Upsloping (Best prognosis)": 0, "Flat (Moderate prognosis)": 1, "Downsloping (Worst prognosis)": 2, "Unknown": 3 } }
+            ];
+        } else if (diseaseType.toLowerCase() === "diabetes") {
+            questions = [
+                { id: "heart_disease", text: "Have you been diagnosed with heart disease?", options: { "No": 0, "Yes": 1 } },
+                { id: "hypertension", text: "Do you have high blood pressure (hypertension)?", options: { "No": 0, "Yes": 1 } }
+            ];
+        } else if (diseaseType.toLowerCase() === "parkinsons") {
+            questions = [
+                { id: "PhysicalActivity2", text: "How often do you engage in physical activity?", options: { "None": 0, "Rarely": 3, "Occasionally": 6, "Regularly": 9 } },
+                { id: "DietQuality", text: "How would you rate your diet quality?", options: { "Poor": 0, "Fair": 3, "Good": 6, "Excellent": 9 } },
+                { id: "SleepQuality", text: "How would you rate your sleep quality?", options: { "Very Poor": 0, "Poor": 4, "Good": 6, "Very Good": 8 } },
+                { id: "TraumaticBrainInjury", text: "Have you ever experienced a traumatic brain injury?", options: { "No": 0, "Yes": 1 } },
+                { id: "Hypertension2", text: "Do you have high blood pressure (hypertension)?", options: { "No": 0, "Yes": 1 } },
+                { id: "Diabetes2", text: "Are you diagnosed with diabetes?", options: { "No": 0, "Yes": 1 } },
+                { id: "Depression", text: "Have you been diagnosed with depression?", options: { "No": 0, "Yes": 1 } },
+                { id: "Stroke2", text: "Have you ever had a stroke?", options: { "No": 0, "Yes": 1 } },
+                { id: "UPDRS", text: "Enter your Unified Parkinson’s Disease Rating Scale (UPDRS) score:", type: Number }, // This will be a number input field,
+                { id: "MoCA", text: "Enter your Montreal Cognitive Assessment (MoCA) score:", type: Number }, // This will be a number input field,
+                { id: "FunctionalAssessment", text: "How would you rate your functional ability?", options: { "No Limitation": 0, "Mildly Limited": 3, "Moderately Limited": 6, "Severely Limited": 9 } },
+                { id: "Tremor", text: "Do you experience tremors?", options: { "No": 0, "Yes": 1 } },
+                { id: "Rigidity", text: "Do you experience muscle rigidity?", options: { "No": 0, "Yes": 1 } },
+                { id: "Bradykinesia", text: "Do you experience slow movement (bradykinesia)?", options: { "No": 0, "Yes": 1 } },
+                { id: "PosturalInstability", text: "Do you have difficulty maintaining balance (postural instability)?", options: { "No": 0, "Yes": 1 } },
+                { id: "SpeechProblems", text: "Do you have speech difficulties?", options: { "No": 0, "Yes": 1 } },
+                { id: "SleepDisorders", text: "Do you experience sleep disorders?", options: { "No": 0, "Yes": 1 } },
+                { id: "Constipation", text: "Do you frequently experience constipation?", options: { "No": 0, "Yes": 1 } }
+            ];
+        } else if (diseaseType.toLowerCase() === "liver_disease") {
+            questions = [
+                { id: "PhysicalActivity3", text: "How often do you engage in physical activity?", options: { "None": 0, "Rarely": 3, "Occasionally": 6, "Regularly": 9 } },
+                { id: "Diabetes3", text: "Are you diagnosed with diabetes?", options: { "No": 0, "Yes": 1 } },
+                { id: "Hypertension3", text: "Do you have high blood pressure (hypertension)?", options: { "No": 0, "Yes": 1 } },
+                { id: "LiverFunctionTest", text: "Enter your liver function test result:", type: Number }, // This will be a number input field,
+            ];
+        } else {
+            questions = [{ id: "default", text: "No specific questions for this disease yet.", options: { "OK": 0 } }];
+        }
+
+        loadQuestion();
+        var modal = new bootstrap.Modal(document.getElementById("predictModal"));
+        modal.show();
+    }
+
+    function loadQuestion() {
+        let question = questions[currentQuestionIndex];
+
+        // Clear previous question before adding a new one
+        let questionContainer = document.getElementById("question-container");
+        questionContainer.innerHTML = ""; 
+
+        questionContainer.style.opacity = "0";
+        setTimeout(() => {
+            // Clear previous question
+            questionContainer.innerHTML = "";
+
+            // Generate question HTML
+            let questionHTML = `
+            <div class="question-slide p-3 rounded">
+                <label for="${question.id}" class="form-label fw-bold text-secondary">${question.text}</label>
+                ${question.options ? `
+                    <select class="form-select border-secondary shadow-sm py-2" id="${question.id}" name="answer">
+                        ${Object.entries(question.options).map(([key, value]) => `
+                            <option value="${value}">${key}</option>
+                        `).join('')}
+                    </select>
+                ` : `
+                    <input type="number" class="form-control border-secondary shadow-sm py-2" id="${question.id}" name="answer">
+                `}
+            </div>`;
+
+            // Append question HTML
+            questionContainer.innerHTML = questionHTML;
+
+            // Smooth fade-in effect
+            questionContainer.style.opacity = "1";
+        }, 300);
+
+        // Show/hide navigation buttons
+        document.getElementById("prevQuestion").style.display = (currentQuestionIndex === 0) ? "none" : "inline-block";
+        document.getElementById("nextQuestion").style.display = (currentQuestionIndex < questions.length - 1) ? "inline-block" : "none";
+        document.getElementById("submitPrediction").style.display = (currentQuestionIndex === questions.length - 1) ? "inline-block" : "none";
+
+        const style = document.createElement("style");
+        style.innerHTML = `
+            #question-container {
+                transition: opacity .3s ease-in-out;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function nextQuestion() {
+        saveResponse();
+        if (currentQuestionIndex < questions.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            loadQuestion();
+        }
+    }
+
+    function saveResponse() {
+        let selectElement = document.querySelector("select[name='answer']");
+        let inputElement = document.querySelector("input[name='answer']");
+    
+        if (selectElement && selectElement.value !== "") {
+            userResponses[questions[currentQuestionIndex].id] = selectElement.value;
+        } else if (inputElement && inputElement.value !== "") {
+            userResponses[questions[currentQuestionIndex].id] = inputElement.value;
+        } else {
+            alert("Please select or enter a value to proceed!");
+            return false;
+        }
+        return true;
+    }
+
+    function submitPrediction() {
+        saveResponse();
+        let formData = new FormData();
+    
+        for (let key in userResponses) {
+            formData.append(key, userResponses[key]);
+        }
+
+        let diseaseType = document.getElementById("diseaseType").value;
+
+         // Check if user is a doctor and get the selected patient ID
+        let patientSelectElement = document.getElementById("selected_patient");
+        if (patientSelectElement) {
+            let selectedPatientId = patientSelectElement.value;
+            if (!selectedPatientId) {
+                alert("Please select a patient.");
+                return;
+            }
+            formData.append("selected_patient", selectedPatientId);
+        }
+        
+        let csrfTokenElement = document.querySelector("[name=csrfmiddlewaretoken]");
+        if (!csrfTokenElement) {
+            alert("CSRF token is missing. Please refresh the page and try again.");
+            return;
+        }
+        let csrfToken = csrfTokenElement.value;
+        let fetchUrl = `/prediction/predict/${diseaseType}/`;
+
+        fetch(fetchUrl, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.text(); // Get the HTML response from Django
+        })
+        .then(html => {
+            document.open();
+            document.write(html);
+            document.close();
+        })
+        .catch(error => console.error("Error:", error));
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("nextQuestion").addEventListener("click", nextQuestion);
+        document.getElementById("prevQuestion").addEventListener("click", prevQuestion);
+        document.getElementById("submitPrediction").addEventListener("click", submitPrediction);
+        let patientSelect = document.getElementById("selected_patient");
+
+    if (patientSelect) {
+        fetch("/prediction/api/get-patients/")
+            .then(response => response.json())
+            .then(data => {
+                if (data.patients.length > 0) {
+                    data.patients.forEach(patient => {
+                        let option = document.createElement("option");
+                        option.value = patient.id;
+                        option.textContent = patient.name+" (Patient ID: "+patient.id+")";
+                        patientSelect.appendChild(option);
+                    });
+                } else {
+                    let option = document.createElement("option");
+                    option.value = "";
+                    option.textContent = "No patients found";
+                    patientSelect.appendChild(option);
+                }
+            })
+            .catch(error => console.error("Error fetching patients:", error));
+        }
+    });
+</script>
+
+{% endblock %}
